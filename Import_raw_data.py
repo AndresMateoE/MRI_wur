@@ -17,7 +17,7 @@ import numpy as np
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI'
 dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '4'
+dir_experimet = '1'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/29012025_Test/'.replace("\\", "/")
@@ -29,12 +29,16 @@ save_path.mkdir(parents=True, exist_ok=True)
 #print(dir_folder + '/' + dir_study + '/' + dir_experimet + '/pdata/1/')
 raw_data_path = dir_folder + '/' + dir_study + '/' + dir_experimet + '/pdata/1/'
 print(raw_data_path)
-dataset = Dataset(raw_data_path, state={ 'mmap': False, 'type': 'rawdata'})
-dataset._set_state({'rawdata'})
-print(dataset.type)
-#sequence_name = dataset['VisuAcqSequenceName'].value
 
-#dataset.__getstate__()
+
+dataset = Dataset(Path(r'C:\Users\mateo006\Documents\MRI\AM7T_250121_SPC_extrudate_1_1_20250121_093706\4\rawdata.job0'))
+
+
+#dataset._set_state({'rawdata'})
+#print(dataset.type)
+
+
+
 
 #help(Dataset)
 
