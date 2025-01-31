@@ -6,6 +6,8 @@ Created on Wed Jan 29 10:39:59 2025
 """
 
 import brukerapi
+import subprocess
+
 from brukerapi.dataset import Dataset
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -17,39 +19,32 @@ import numpy as np
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI'
 dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '1'
+dir_experimet = '2'
 
 ''' Save folder '''
-dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/29012025_Test/'.replace("\\", "/")
-dir_save_name = 'Test'
-save_path = Path(dir_save_folder + dir_save_name + '/' + dir_experimet)
-save_path.mkdir(parents=True, exist_ok=True)
+dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/250131_Test/'
+#dir_save_name = ''
+
+save_path = Path(dir_save_folder +  dir_experimet + '/')
+
+save_path_folder = Path(dir_save_folder + dir_experimet + '/')
+save_path_folder.mkdir(parents=True, exist_ok=True)
 
 ''' load data and make dataset'''
 #print(dir_folder + '/' + dir_study + '/' + dir_experimet + '/pdata/1/')
-raw_data_path = dir_folder + '/' + dir_study + '/' + dir_experimet + '/pdata/1/'
+raw_data_path = Path(dir_folder + '/' + dir_study + '/' + dir_experimet + '/')
 print(raw_data_path)
+print(save_path)
+# =============================================================================
+#                               Open matlab
+# =============================================================================
 
+matlab_exe = 'C:/MyPrograms/MatLab/bin/matlab.exe'
 
-dataset = Dataset(Path(r'C:\Users\mateo006\Documents\MRI\AM7T_250121_SPC_extrudate_1_1_20250121_093706\4\rawdata.job0'))
+comando = [
+    matlab_exe,
+    '-batch',  # Esto ejecutará el script sin abrir la GUI de MATLAB
+    f"load_rawdata_am('{raw_data_path}', '{save_path}')"
+]
 
-
-#dataset._set_state({'rawdata'})
-#print(dataset.type)
-
-
-
-
-#help(Dataset)
-
-#data2d = dataset.data
-
-#print(data2d)
-#acqp = dataset._parameters['visu_pars']
-#print(acqp)
-
-#print(data2d)
-
-#print(dir(dataset))
-#dir(dataset)
-#dataset['schema']
+subprocess.run(comando)

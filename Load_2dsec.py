@@ -18,8 +18,8 @@ dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
 dir_experimet = '1'
 
 ''' Save folder '''
-dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/250130_Test/'.replace("\\", "/")
-dir_save_name = 'Test'
+dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
+dir_save_name = '250131_Test/'
 save_path = Path(dir_save_folder + dir_save_name + '/' + dir_experimet)
 save_path.mkdir(parents=True, exist_ok=True)
 
