@@ -6,14 +6,15 @@
 
 
 function load_rawdata_am(read_path, save_path)
-    addBrukerPaths; %maybe this folder should be in the python codes folder also.
     addpath('C:\Users\mateo006\Documents\Python codes\MRI_wur\additional', 'C:\Users\mateo006\Documents\Python codes\MRI_wur\datatypes');
-    
-    read_path = 'C:\Users\mateo006\Documents\MRI\AM7T_250121_SPC_extrudate_1_1_20250121_093706\2\';
-    save_path = 'C:\Users\mateo006\Documents\Processed_data\250131_Test\2\';
+    addpath 'C:\Users\mateo006\Documents\Python codes\Matlab';
+    addBrukerPaths; %maybe this folder should be in the python codes folder also.
 
-    %read_path = [read_path, filesep];
-    %save_path = [save_path, filesep];
+    %read_path = 'C:\Users\mateo006\Documents\MRI\AM7T_250121_SPC_extrudate_1_1_20250121_093706\2\';
+    %save_path = 'C:\Users\mateo006\Documents\Processed_data\250203_Test\2\';
+
+    read_path = [read_path, filesep];
+    save_path = [save_path, filesep];
     
     %% Initialise 
     % We will use this from python so the function will eat a sigle path

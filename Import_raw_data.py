@@ -22,7 +22,7 @@ dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
 dir_experimet = '2'
 
 ''' Save folder '''
-dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/250131_Test/'
+dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/250203_Test/'
 #dir_save_name = ''
 
 save_path = Path(dir_save_folder +  dir_experimet + '/')
@@ -37,14 +37,25 @@ print(raw_data_path)
 print(save_path)
 # =============================================================================
 #                               Open matlab
+'''
+    Advice: Use this part to create the file but later comment it (Ctrl+4)
+'''
 # =============================================================================
 
-matlab_exe = 'C:/MyPrograms/MatLab/bin/matlab.exe'
+# =============================================================================
+# matlab_exe = 'C:/MyPrograms/MatLab/bin/matlab.exe'
+# 
+# comando = [
+#     matlab_exe,
+#     '-batch',  # Esto ejecutará el script sin abrir la GUI de MATLAB
+#     f"load_rawdata_am('{raw_data_path}', '{save_path}')"
+#     #"Save_test"
+# ]
+# 
+# subprocess.run(comando)
+# =============================================================================
 
-comando = [
-    matlab_exe,
-    '-batch',  # Esto ejecutará el script sin abrir la GUI de MATLAB
-    f"load_rawdata_am('{raw_data_path}', '{save_path}')"
-]
 
-subprocess.run(comando)
+
+
+
