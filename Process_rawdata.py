@@ -57,19 +57,46 @@ if sequence_name == '<Bruker:RARE>':
     numEchos = dataset['PVM_NEchoImages'].value
     slice_order = dataset['PVM_EncSteps1'].value
     image_order = dataset['PVM_ObjOrderList'].value
-    print(npoints)
-    print(numRare)
-    print(numSlices)
-    print(numAverages)
-    print(numEchos)
-    print(dataset['PVM_EncSteps1'].value)
-    print(image_order)
     
+    
+    #Create the new data format and reshape the data
+    freqdata = np.zeros((len(rawdata[:,0]), len(rawdata[0,:]/(numRepetitions*numSlices)), numRepetitions, numSlices), dtype=complex)
+    freqsize  = np.shape(freqdata)
+    print(freqsize[0])
+    print(numRepetitions)
+    rawdata = np.reshape(rawdata, [freqsize[0],-1, numRepetitions])
+    
+    
+    # Slice order
+    slice_order = slice_order + (npoints[0]/2)
+    slice_order = np.reshape(slice_order, [len(slice_order)//numRare,numRare]).astype(int)
+    #print(slice_order)
+# =============================================================================
+#     print(slice_order)
+#     print(npoints)
+#     print(numRare)
+#     print(numSlices)
+#     print(numAverages)
+#     print(numEchos)
+#     print(dataset['PVM_EncSteps1'].value)
+#     print(image_order)
+# =============================================================================
+    
+
     
     #Rawdata to k-space
     for rep in range(0,numRepetitions,1):
-        print('hi')
-
+        #print('hi')
+        for line in range(0,len(slice_order),1):
+            #print(line)
+            freqline = rawdata[:,line*numSlices*numRare:(line+1)*numSlices*numRare,rep]
+            #print(freqline)
+            for frame in range(0,numSlices):
+                print(frame)
+                for rare in range(0,numRare):
+                    print(rare)
+                    #print('.')
+                    #freqdata[:,slice_order[rare,line],rep,image_order] = freqline[:,(frame*numRare + rare )]
 
 
 
