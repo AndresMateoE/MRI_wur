@@ -120,6 +120,7 @@ if sequence_name == '<Bruker:RARE>':
                 levels = 2500,
                 cmap = 'gray',
                 lw=2)
+    plt.gca().set_aspect('auto', adjustable='datalim')
     plt.colorbar()
     plt.show()
 
