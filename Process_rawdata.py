@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import Core_am as am
 from pathlib import Path
 from brukerapi.dataset import Dataset
+from numpy.fft import fftshift, fft2
 
 # =============================================================================
 #                               Directory
@@ -18,7 +19,7 @@ from brukerapi.dataset import Dataset
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI/'
 dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '8'
+dir_experimet = '9'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
@@ -62,8 +63,8 @@ if sequence_name == '<Bruker:RARE>':
     #Create the new data format and reshape the data
     freqdata = np.zeros((len(rawdata[:,0]), len(rawdata[0,:]/(numRepetitions*numSlices)), numRepetitions, numSlices), dtype=complex)
     freqsize  = np.shape(freqdata)
-    print(freqsize[0])
-    print(numRepetitions)
+    #print(freqdata)
+    #print(numRepetitions)
     rawdata = np.reshape(rawdata, [freqsize[0],-1, numRepetitions])
     
     
@@ -82,23 +83,45 @@ if sequence_name == '<Bruker:RARE>':
 #     print(image_order)
 # =============================================================================
     
-
+    print(np.shape(slice_order))
     
     #Rawdata to k-space
     for rep in range(0,numRepetitions,1):
         #print('hi')
         for line in range(0,len(slice_order),1):
-            #print(line)
+            print(line)
             freqline = rawdata[:,line*numSlices*numRare:(line+1)*numSlices*numRare,rep]
             #print(freqline)
             for frame in range(0,numSlices):
-                print(frame)
+                #print(frame)
                 for rare in range(0,numRare):
-                    print(rare)
+                    #pass
+                    #print(line)
+                    #print(slice_order[line,rare])
                     #print('.')
-                    #freqdata[:,slice_order[rare,line],rep,image_order] = freqline[:,(frame*numRare + rare )]
+                    freqdata[:,slice_order[line,rare],rep,image_order] = freqline[:,(frame*numRare + rare )]
+                    
+                    
+    imagedata = np.zeros(np.shape(freqdata))
+    for slice in range (0,numSlices):
+        imagedata[:,:,0,slice] = fftshift(fft2(freqdata[:,:,0,slice]))
+        
+    #Grafico k-space
+# =============================================================================
+#     plt.contour(np.abs(freqdata[:,:,0,0]), 
+#                 levels = 2500,
+#                 cmap = 'gray',
+#                 lw=2)
+#     plt.colorbar()
+#     plt.show()
+# =============================================================================
 
-
+    plt.contour(np.abs(imagedata[:,:,0,0]), 
+                levels = 2500,
+                cmap = 'gray',
+                lw=2)
+    plt.colorbar()
+    plt.show()
 
 
 

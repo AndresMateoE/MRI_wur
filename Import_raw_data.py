@@ -19,7 +19,7 @@ import numpy as np
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI'
 dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '10S'
+dir_experimet = '9'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/250203_Test/'
