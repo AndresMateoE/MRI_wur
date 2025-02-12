@@ -23,7 +23,7 @@ dir_experimet = '9'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
-dir_save_name = '250203_Test/'
+dir_save_name = '250212_Test/'
 save_path = Path(dir_save_folder + dir_save_name + '/' + dir_experimet)
 save_path.mkdir(parents=True, exist_ok=True)
 
@@ -39,10 +39,10 @@ data2d = dataset.data
 #       (For now create it from the other script and the load it)
 # =============================================================================
 
-rawdata = np.genfromtxt(dir_save_folder + dir_save_name + '/' + dir_experimet + '/' + 'rawdata.csv', delimiter=',', dtype=str)
+rawdata = np.genfromtxt(dir_folder + '/' + dir_study + '/' + dir_experimet + '/' + 'rawdata.csv', delimiter=',', dtype=str)
 # Transform to the numpy complex format
 rawdata = np.vectorize(am.convert_to_numpy_complex)(rawdata)
-print(rawdata.shape)
+
 
 #Read other parameters according to the sequence
 sequence_name = dataset['VisuAcqSequenceName'].value
@@ -63,15 +63,15 @@ if sequence_name == '<Bruker:RARE>':
     #Create the new data format and reshape the data
     freqdata = np.zeros((len(rawdata[:,0]), len(rawdata[0,:]/(numRepetitions*numSlices)), numRepetitions, numSlices), dtype=complex)
     freqsize  = np.shape(freqdata)
-    #print(freqdata)
-    #print(numRepetitions)
+
     rawdata = np.reshape(rawdata, [freqsize[0],-1, numRepetitions])
+    
     
     
     # Slice order
     slice_order = slice_order + (npoints[0]/2)
     slice_order = np.reshape(slice_order, [len(slice_order)//numRare,numRare]).astype(int)
-    #print(slice_order)
+
 # =============================================================================
 #     print(slice_order)
 #     print(npoints)
@@ -89,20 +89,17 @@ if sequence_name == '<Bruker:RARE>':
     for rep in range(0,numRepetitions,1):
         #print('hi')
         for line in range(0,len(slice_order),1):
-            print(line)
+            #print(line)
             freqline = rawdata[:,line*numSlices*numRare:(line+1)*numSlices*numRare,rep]
             #print(freqline)
             for frame in range(0,numSlices):
                 #print(frame)
                 for rare in range(0,numRare):
-                    #pass
-                    #print(line)
-                    #print(slice_order[line,rare])
-                    #print('.')
                     freqdata[:,slice_order[line,rare],rep,image_order] = freqline[:,(frame*numRare + rare )]
                     
                     
-    imagedata = np.zeros(np.shape(freqdata))
+    #imagedata = np.zeros(np.shape(freqdata))
+    imagedata = np.zeros_like(freqdata, dtype=np.complex128)
     for slice in range (0,numSlices):
         imagedata[:,:,0,slice] = fftshift(fft2(freqdata[:,:,0,slice]))
         
@@ -115,18 +112,47 @@ if sequence_name == '<Bruker:RARE>':
 #     plt.colorbar()
 #     plt.show()
 # =============================================================================
+    im_data = np.squeeze(np.abs(imagedata[:,:,0,0]))
+    im_data = im_data / (npoints[0]*npoints[1])
 
-    plt.contour(np.abs(imagedata[:,:,0,0]), 
-                levels = 2500,
-                cmap = 'gray',
-                lw=2)
-    plt.gca().set_aspect('auto', adjustable='datalim')
+    threshold = 0.9 * np.max(im_data)
+    im_data = np.where(im_data > threshold, threshold, im_data)
+    norm_im_data = im_data / threshold
+
+    #rearrange data for correct ploting
+    
+    ROWS_TO_FLIP = 25
+    COLUMS_TO_FLIP = 0
+    
+    plot_data = np.rot90(norm_im_data)
+    plot_data = np.roll(plot_data, ROWS_TO_FLIP, 0)
+    plot_data = np.roll(plot_data, COLUMS_TO_FLIP, 1)
+
+    plt.figure(dpi=1200)    
+    plt.imshow(plot_data,
+               cmap='inferno',
+               interpolation='none',
+               
+               )
     plt.colorbar()
+    plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
     plt.show()
 
+elif sequence_name == '<Bruker:FLASH>':
+    print('Use Load_2dsec for FLASH')
 
-
-
+elif sequence_name == '<Bruker:MSME>':
+    #print(rawdata)
+    # Load needed parameters
+    PVM_Matrix = dataset['PVM_Matrix'].value
+    nSlices = dataset['PVM_SPackArrNSlices'].value
+    PVM_NEchoImages = dataset['PVM_NEchoImages'].value
+    
+    print(PVM_Matrix)
+    print(nSlices)
+    print(PVM_NEchoImages)
+    
+    pass
 
 
 
