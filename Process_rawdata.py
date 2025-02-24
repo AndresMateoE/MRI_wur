@@ -19,7 +19,7 @@ from numpy.fft import fftshift, fft2
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI/'
 dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '9'
+dir_experimet = '10'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
@@ -146,13 +146,64 @@ elif sequence_name == '<Bruker:MSME>':
     # Load needed parameters
     PVM_Matrix = dataset['PVM_Matrix'].value
     nSlices = dataset['PVM_SPackArrNSlices'].value
-    PVM_NEchoImages = dataset['PVM_NEchoImages'].value
+    numEchos = dataset['PVM_NEchoImages'].value
+    phaseOrder = np.array(dataset['PVM_EncSteps1'].value + PVM_Matrix[1]/2, dtype=int)
+    sliceOrder = np.array(dataset['PVM_ObjOrderList'].value, dtype=int)
+    print(sliceOrder)
+
     
-    print(PVM_Matrix)
-    print(nSlices)
-    print(PVM_NEchoImages)
+    # Arrange the rawdata file
+    raw = np.reshape(rawdata, (PVM_Matrix[0], numEchos, nSlices, PVM_Matrix[1]))
     
-    pass
+    raw = np.transpose(raw, (0, 3, 2, 1))
+    print(np.shape(raw))
+    
+    #raw[:, phaseOrder, np.ix_(sliceOrder), :] = raw
+    raw[:, phaseOrder, sliceOrder:sliceOrder+1, :] = raw
+    
+    kspace = raw
+    
+    plt.contour(np.abs(kspace[:,:,0,48]), 
+                levels = 2500,
+                cmap = 'gray',
+                )
+    plt.colorbar()
+    plt.show()
+    
+    # Now process the kpace to image
+    freqdata = kspace
+    imagedata = np.zeros_like(freqdata, dtype=np.complex128)
+    for slice in range(0,nSlices):
+        for ee in range(0,numEchos):
+            imagedata[:,:,slice,ee] = fftshift(fft2(freqdata[:,:,slice,ee]))
+    
+    im_data = np.squeeze(np.abs(imagedata[:,:,0,0]))
+    #im_data = im_data / (npoints[0]*npoints[1])
+
+    threshold = 0.9 * np.max(im_data)
+    im_data = np.where(im_data > threshold, threshold, im_data)
+    norm_im_data = im_data / threshold
+
+    #rearrange data for correct ploting
+    
+    ROWS_TO_FLIP = 25
+    COLUMS_TO_FLIP = 0
+    
+    plot_data = np.rot90(norm_im_data)
+    plot_data = np.roll(plot_data, ROWS_TO_FLIP, 0)
+    plot_data = np.roll(plot_data, COLUMS_TO_FLIP, 1)
+
+# =============================================================================
+#     plt.figure(dpi=1200)    
+#     plt.imshow(plot_data,
+#                cmap='inferno',
+#                interpolation='none',
+#                
+#                )
+#     plt.colorbar()
+#     #plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
+#     plt.show()
+# =============================================================================
 
 
 
