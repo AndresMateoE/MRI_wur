@@ -12,3 +12,5 @@ def convert_to_numpy_complex(string):
     # Reemplazar 'i' por 'j' para hacer el formato compatible con numpy
     string = string.replace('i', 'j')
     return complex(string)
+
+#Add function for MSME fitting

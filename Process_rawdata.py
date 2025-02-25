@@ -11,7 +11,9 @@ import Core_am as am
 from pathlib import Path
 from brukerapi.dataset import Dataset
 from numpy.fft import fftshift, fft2
+from scipy.optimize import curve_fit
 
+#%% Load and Import rawdata
 # =============================================================================
 #                               Directory
 # =============================================================================
@@ -48,6 +50,7 @@ rawdata = np.vectorize(am.convert_to_numpy_complex)(rawdata)
 sequence_name = dataset['VisuAcqSequenceName'].value
 print(sequence_name)
 
+#%% RARE
 if sequence_name == '<Bruker:RARE>':
     
     numRare = dataset['PVM_RareFactor'].value
@@ -138,32 +141,31 @@ if sequence_name == '<Bruker:RARE>':
     plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
     plt.show()
 
+#%% FLASH
 elif sequence_name == '<Bruker:FLASH>':
     print('Use Load_2dsec for FLASH')
 
+#%% MSME
 elif sequence_name == '<Bruker:MSME>':
-    #print(rawdata)
+    
+
     # Load needed parameters
     PVM_Matrix = dataset['PVM_Matrix'].value
-    nSlices = dataset['PVM_SPackArrNSlices'].value
+    nSlices = np.int64(dataset['PVM_SPackArrNSlices'].value)
     numEchos = dataset['PVM_NEchoImages'].value
     phaseOrder = np.array(dataset['PVM_EncSteps1'].value + PVM_Matrix[1]/2, dtype=int)
     sliceOrder = np.array(dataset['PVM_ObjOrderList'].value, dtype=int)
-    print(sliceOrder)
 
     
     # Arrange the rawdata file
     raw = np.reshape(rawdata, (PVM_Matrix[0], numEchos, nSlices, PVM_Matrix[1]))
-    
     raw = np.transpose(raw, (0, 3, 2, 1))
-    print(np.shape(raw))
-    
-    #raw[:, phaseOrder, np.ix_(sliceOrder), :] = raw
     raw[:, phaseOrder, sliceOrder:sliceOrder+1, :] = raw
-    
+    raw = np.reshape(rawdata, (PVM_Matrix[0], PVM_Matrix[1], nSlices, numEchos))
+
     kspace = raw
     
-    plt.contour(np.abs(kspace[:,:,0,48]), 
+    plt.contour(np.abs(kspace[:,:,0,44]), 
                 levels = 2500,
                 cmap = 'gray',
                 )
@@ -177,33 +179,65 @@ elif sequence_name == '<Bruker:MSME>':
         for ee in range(0,numEchos):
             imagedata[:,:,slice,ee] = fftshift(fft2(freqdata[:,:,slice,ee]))
     
-    im_data = np.squeeze(np.abs(imagedata[:,:,0,0]))
-    #im_data = im_data / (npoints[0]*npoints[1])
-
-    threshold = 0.9 * np.max(im_data)
-    im_data = np.where(im_data > threshold, threshold, im_data)
-    norm_im_data = im_data / threshold
-
-    #rearrange data for correct ploting
     
-    ROWS_TO_FLIP = 25
-    COLUMS_TO_FLIP = 0
+    #%% MSME Exponential fit
+    fitdata = imagedata
+    fitdata = np.abs(fitdata)
+    fitdata = fitdata / np.max(fitdata[:,:,0,0])  #Normalize with first image
+    TE = dataset.TE  #list with echo times
     
-    plot_data = np.rot90(norm_im_data)
-    plot_data = np.roll(plot_data, ROWS_TO_FLIP, 0)
-    plot_data = np.roll(plot_data, COLUMS_TO_FLIP, 1)
-
+    #Define the function
+    def T2_decay(t, M, T2, C):
+        return M * np.exp(-t / T2) + C
+        
+    # 'Bulk' fit (like average)
+    av_t_data = np.zeros(numEchos)
+    for i in range(0,numEchos):
+        temp_data = fitdata[:,:,0,i]
+        temp_data = temp_data[temp_data>0]
+        av_t_data[i] = np.mean(temp_data)
+        
+    T2_coef, T2_cov = curve_fit(T2_decay, TE, av_t_data, p0=[1, 1, 1])
+    
+    T2_conf = np.array([T2_coef -  np.sqrt(np.diag(T2_cov)) * 1.96,  # Límite inferior
+                    T2_coef + np.sqrt(np.diag(T2_cov)) * 1.96]) # Límite superior
+    
+    av_T2_error = T2_conf[1,2]-T2_conf[0,2]
+    av_T2_value = T2_coef[2]
+    
+    print(av_T2_value, av_T2_error)
+        
+        
+    #%% MSME images for each echo
 # =============================================================================
-#     plt.figure(dpi=1200)    
-#     plt.imshow(plot_data,
-#                cmap='inferno',
-#                interpolation='none',
-#                
-#                )
-#     plt.colorbar()
-#     #plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
-#     plt.show()
+#     # Print an image for each echo, just to check 
+#     for echo in range(0,numEchos):
+#         
+#         im_data = np.squeeze(np.abs(imagedata[:,:,0,echo]))
+#         #im_data = im_data / (npoints[0]*npoints[1])
+#     
+#         threshold = 0.9 * np.max(im_data)
+#         im_data = np.where(im_data > threshold, threshold, im_data)
+#         norm_im_data = im_data / threshold
+#     
+#         #rearrange data for correct ploting
+#         
+#         ROWS_TO_FLIP = 25
+#         COLUMS_TO_FLIP = 0
+#         
+#         plot_data = np.rot90(norm_im_data)
+#         plot_data = np.roll(plot_data, ROWS_TO_FLIP, 0)
+#         plot_data = np.roll(plot_data, COLUMS_TO_FLIP, 1)
+#     
+#         plt.figure(dpi=1200)    
+#         plt.imshow(plot_data,
+#                    cmap='inferno',
+#                    interpolation='none',
+#                    
+#                    )
+#         plt.colorbar()
+#         plt.show()
+#         pass
 # =============================================================================
 
-
-
+    
