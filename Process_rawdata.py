@@ -20,12 +20,12 @@ from scipy.optimize import curve_fit
 
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI/'
-dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '10'
+dir_study = 'AM7T_250225_SPI_SPIplus30'
+dir_experimet = '11'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
-dir_save_name = '250212_Test/'
+dir_save_name = '250226_SPI_SPI30Insect/'
 save_path = Path(dir_save_folder + dir_save_name + '/' + dir_experimet)
 save_path.mkdir(parents=True, exist_ok=True)
 
@@ -117,14 +117,16 @@ if sequence_name == '<Bruker:RARE>':
 # =============================================================================
     im_data = np.squeeze(np.abs(imagedata[:,:,0,0]))
     im_data = im_data / (npoints[0]*npoints[1])
-
-    threshold = 0.9 * np.max(im_data)
+    
+    #im_data = np.where(im_data > 3*np.mean(im_data), 3*np.mean(im_data), im_data)
+    
+    threshold = 0.8 * np.max(im_data)
     im_data = np.where(im_data > threshold, threshold, im_data)
     norm_im_data = im_data / threshold
 
     #rearrange data for correct ploting
     
-    ROWS_TO_FLIP = 25
+    ROWS_TO_FLIP = -15
     COLUMS_TO_FLIP = 0
     
     plot_data = np.rot90(norm_im_data)
@@ -138,7 +140,7 @@ if sequence_name == '<Bruker:RARE>':
                
                )
     plt.colorbar()
-    plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
+    plt.savefig(save_path / "Process_fig_RARE", dpi=1200)
     plt.show()
 
 #%% FLASH
@@ -165,12 +167,11 @@ elif sequence_name == '<Bruker:MSME>':
 
     kspace = raw
     
-    plt.contour(np.abs(kspace[:,:,0,44]), 
-                levels = 2500,
-                cmap = 'gray',
-                )
-    plt.colorbar()
-    plt.show()
+# =============================================================================
+#     plt.contour(np.abs(kspace[:,:,0,44]),levels = 2500,cmap = 'gray')
+#     plt.colorbar()
+#     plt.show()
+# =============================================================================
     
     # Now process the kpace to image
     freqdata = kspace
@@ -234,24 +235,26 @@ elif sequence_name == '<Bruker:MSME>':
             #print(T2_value, T2_error)
             
     
-    mapdata = np.where(mapdata > 80, 0, mapdata)
-    #mapdata = am.create_mask(mapdata, 7)
-    
     ROWS_TO_FLIP = 0
-    COLUMS_TO_FLIP = -27
+    COLUMS_TO_FLIP = 15
         
     #plot_data = np.rot90(norm_im_data)
     mapdata = np.roll(mapdata, ROWS_TO_FLIP, 0)
     mapdata = np.roll(mapdata, COLUMS_TO_FLIP, 1)
 
+    mapdata = np.where(mapdata > 80, 0, mapdata)
+    #mapdata, mask = am.create_mask3(mapdata, 7)    
+    mapdata = am.create_mask(mapdata, 7)    
+
     plt.figure(dpi=1200)    
-    plt.imshow(mapdata, 
+    img = plt.imshow(mapdata, 
                cmap='inferno',
                interpolation='none',
                
                )
-    plt.colorbar()
-#    plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
+    cbar = plt.colorbar(img)
+    cbar.set_label("T2 [ms]", fontsize=12)
+    #plt.savefig(save_path / "Process_fig_MSME", dpi=1200)
     plt.show()
             
     #%% MSME images for each echo

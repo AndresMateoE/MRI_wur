@@ -14,12 +14,12 @@ import numpy as np
 # =============================================================================
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI/'
-dir_study = 'AM7T_250121_SPC_extrudate_1_1_20250121_093706'
-dir_experimet = '8'
+dir_study = 'AM7T_250225_SPI_SPIplus30'
+dir_experimet = '7'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
-dir_save_name = '250131_Test/'
+dir_save_name = '250226_SPI_SPI30Insect/'
 save_path = Path(dir_save_folder + dir_save_name + '/' + dir_experimet)
 save_path.mkdir(parents=True, exist_ok=True)
 
@@ -58,7 +58,7 @@ axis_y = np.round(resolution * np.linspace(0, npoints[1], npoints[1]), 4)
 #                                Ploting 
 # =============================================================================
 
-
+seq_name_short = sequence_name[1:6]+sequence_name[8:-1]
 for i in range(len(dataset.data[0,0,:])):
     
     #plt.figure(figsize=(base_fig_size, fig_ratio * base_fig_size))
@@ -78,7 +78,7 @@ for i in range(len(dataset.data[0,0,:])):
     plt.xlabel('x [mm]')
     plt.ylabel('y [mm]')
     plt.colorbar()
-    plt.savefig(save_path / f"Test1_fig_{i+1}", dpi=600)
+    plt.savefig(save_path / f"fig_{i+1}_{seq_name_short}", dpi=600)
     plt.show()
     
 
