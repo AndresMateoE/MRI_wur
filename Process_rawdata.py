@@ -2,7 +2,7 @@
 """
 Read Raw Data and transform it to images
 
-@author: mateo006
+@author:   Andrés Mateo
 """
 
 import numpy as np
@@ -194,20 +194,66 @@ elif sequence_name == '<Bruker:MSME>':
     av_t_data = np.zeros(numEchos)
     for i in range(0,numEchos):
         temp_data = fitdata[:,:,0,i]
+        temp_data = am.create_mask(temp_data, 6)
         temp_data = temp_data[temp_data>0]
         av_t_data[i] = np.mean(temp_data)
         
-    T2_coef, T2_cov = curve_fit(T2_decay, TE, av_t_data, p0=[1, 1, 1])
+    T2_coef, T2_cov = curve_fit(T2_decay, TE, av_t_data, p0=[1, 12, 0.1], maxfev =5000)
     
+    #print(T2_coef, T2_cov)
     T2_conf = np.array([T2_coef -  np.sqrt(np.diag(T2_cov)) * 1.96,  # Límite inferior
                     T2_coef + np.sqrt(np.diag(T2_cov)) * 1.96]) # Límite superior
     
-    av_T2_error = T2_conf[1,2]-T2_conf[0,2]
-    av_T2_value = T2_coef[2]
+    av_T2_error = T2_conf[1,1]-T2_conf[0,1]
+    av_T2_value = T2_coef[1]
     
     print(av_T2_value, av_T2_error)
+    
+    # voxel by voxel fit
+    sizedata = np.shape(imagedata)
+    mapdata = np.zeros_like(fitdata[:,:,0,0])
+    errordata = np.zeros_like(fitdata[:,:,0,0])
+    
+    for row in range(0,sizedata[0]):
+        for col in range(0,sizedata[1]):
+            temp_data = np.squeeze(fitdata[row,col,0,:])
+            if temp_data[0] == 0:
+                mapdata[row,col] = 0
+                continue
+            if np.any(np.isnan(temp_data)) or np.any(np.isinf(temp_data)):
+                print("Error: temp_data contiene NaN o Inf")
+            T2_coef, T2_cov = curve_fit(T2_decay, TE, temp_data, p0=[1, 12, 0.01], maxfev=5000)
+            T2_conf = np.array([T2_coef -  np.sqrt(np.diag(T2_cov)) * 1.96,  # Límite inferior
+                                T2_coef + np.sqrt(np.diag(T2_cov)) * 1.96]) # Límite superior
         
+            T2_error = T2_conf[1,1]-T2_conf[0,1]
+            T2_value = T2_coef[1]
+            mapdata[row,col]= T2_value
+            errordata[row,col] = T2_error
+            
+            #print(T2_value, T2_error)
+            
+    
+    mapdata = np.where(mapdata > 80, 0, mapdata)
+    #mapdata = am.create_mask(mapdata, 7)
+    
+    ROWS_TO_FLIP = 0
+    COLUMS_TO_FLIP = -27
         
+    #plot_data = np.rot90(norm_im_data)
+    mapdata = np.roll(mapdata, ROWS_TO_FLIP, 0)
+    mapdata = np.roll(mapdata, COLUMS_TO_FLIP, 1)
+
+    plt.figure(dpi=1200)    
+    plt.imshow(mapdata, 
+               cmap='inferno',
+               interpolation='none',
+               
+               )
+    plt.colorbar()
+#    plt.savefig(save_path / "Test1_fig_RARE", dpi=1200)
+    plt.show()
+            
     #%% MSME images for each echo
 # =============================================================================
 #     # Print an image for each echo, just to check 
