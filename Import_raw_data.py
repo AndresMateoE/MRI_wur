@@ -19,7 +19,7 @@ import numpy as np
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI'
 dir_study = 'AM7T_250225_SPI_SPIplus30'
-dir_experimet = '12'
+dir_experimet = '15'
 
 
 ''' load data and make dataset'''

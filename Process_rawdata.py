@@ -21,7 +21,7 @@ from scipy.optimize import curve_fit
 ''' load folder '''
 dir_folder = 'C:/Users/mateo006/Documents/MRI/'
 dir_study = 'AM7T_250225_SPI_SPIplus30'
-dir_experimet = '11'
+dir_experimet = '13'
 
 ''' Save folder '''
 dir_save_folder = 'C:/Users/mateo006/Documents/Processed_data/'.replace("\\", "/")
@@ -75,16 +75,14 @@ if sequence_name == '<Bruker:RARE>':
     slice_order = slice_order + (npoints[0]/2)
     slice_order = np.reshape(slice_order, [len(slice_order)//numRare,numRare]).astype(int)
 
-# =============================================================================
-#     print(slice_order)
-#     print(npoints)
-#     print(numRare)
-#     print(numSlices)
-#     print(numAverages)
-#     print(numEchos)
-#     print(dataset['PVM_EncSteps1'].value)
-#     print(image_order)
-# =============================================================================
+    #print(slice_order)
+    print(npoints)
+    print(numRare)
+    print(numSlices)
+    print(numAverages)
+    print(numEchos)
+    print(dataset['PVM_EncSteps1'].value)
+    print(image_order)
     
     print(np.shape(slice_order))
     
@@ -98,7 +96,9 @@ if sequence_name == '<Bruker:RARE>':
             for frame in range(0,numSlices):
                 #print(frame)
                 for rare in range(0,numRare):
-                    freqdata[:,slice_order[line,rare],rep,image_order] = freqline[:,(frame*numRare + rare )]
+                    #print(np.shape(freqline[:,(frame*numRare + rare )]))
+                    #print(np.shape(freqdata[:,slice_order[line,rare],rep,image_order]))
+                    freqdata[:,slice_order[line,rare],rep,frame] = freqline[:,(frame*numRare + rare )]
                     
                     
     #imagedata = np.zeros(np.shape(freqdata))
@@ -115,33 +115,44 @@ if sequence_name == '<Bruker:RARE>':
 #     plt.colorbar()
 #     plt.show()
 # =============================================================================
-    im_data = np.squeeze(np.abs(imagedata[:,:,0,0]))
-    im_data = im_data / (npoints[0]*npoints[1])
-    
-    #im_data = np.where(im_data > 3*np.mean(im_data), 3*np.mean(im_data), im_data)
-    
-    threshold = 0.8 * np.max(im_data)
-    im_data = np.where(im_data > threshold, threshold, im_data)
-    norm_im_data = im_data / threshold
 
-    #rearrange data for correct ploting
+    for sli in range (0,numSlices):
+        im_data = np.squeeze(np.abs(imagedata[:,:,0,sli]))
+        im_data = im_data / (npoints[0]*npoints[1])
+        
+        im_data = np.where(im_data > 3*np.mean(im_data), 1.5*np.mean(im_data), im_data)
+        
+        threshold = 0.8 * np.max(im_data)
+        im_data = np.where(im_data > threshold, threshold, im_data)
+        norm_im_data = im_data / threshold
     
-    ROWS_TO_FLIP = -15
-    COLUMS_TO_FLIP = 0
-    
-    plot_data = np.rot90(norm_im_data)
-    plot_data = np.roll(plot_data, ROWS_TO_FLIP, 0)
-    plot_data = np.roll(plot_data, COLUMS_TO_FLIP, 1)
-
-    plt.figure(dpi=1200)    
-    plt.imshow(plot_data,
-               cmap='inferno',
-               interpolation='none',
-               
-               )
-    plt.colorbar()
-    plt.savefig(save_path / "Process_fig_RARE", dpi=1200)
-    plt.show()
+        #rearrange data for correct ploting
+        
+        ROWS_TO_FLIP = -15
+        COLUMS_TO_FLIP = 0
+        
+        plot_data = np.rot90(norm_im_data)
+        plot_data = np.roll(plot_data, ROWS_TO_FLIP, 0)
+        plot_data = np.roll(plot_data, COLUMS_TO_FLIP, 1)
+        
+        print(np.shape(plot_data))
+        
+        plt.figure(figsize=(plot_data.shape[1] / 100, plot_data.shape[0] / 100), 
+                   dpi=600)    
+        plt.imshow(plot_data,
+                   cmap='inferno',
+                   interpolation='nearest',
+                   )
+        plt.title("SPI and PPI+30Ins RARE", fontsize=10)
+        plt.gca().set_xticks([])  
+        plt.gca().set_yticks([])
+        plt.gca().set_frame_on(False)
+        cbar = plt.colorbar()
+        cbar.ax.set_position([0.92, 0.1, 0.03, 0.1]) #[posx,posy,width,hight]
+        plt.tight_layout(pad=0)
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        plt.savefig(save_path / f"Process_fig_RARE_slice{slice}", dpi=1200, bbox_inches='tight')
+        plt.show()
 
 #%% FLASH
 elif sequence_name == '<Bruker:FLASH>':
@@ -160,11 +171,12 @@ elif sequence_name == '<Bruker:MSME>':
 
     
     # Arrange the rawdata file
-    raw = np.reshape(rawdata, (PVM_Matrix[0], numEchos, nSlices, PVM_Matrix[1]))
+    raw = np.reshape(rawdata, (PVM_Matrix[0], numEchos, nSlices, PVM_Matrix[1]), order='F')
     raw = np.transpose(raw, (0, 3, 2, 1))
     raw[:, phaseOrder, sliceOrder:sliceOrder+1, :] = raw
-    raw = np.reshape(rawdata, (PVM_Matrix[0], PVM_Matrix[1], nSlices, numEchos))
-
+    #raw = np.reshape(rawdata, (PVM_Matrix[0], PVM_Matrix[1], nSlices, numEchos))
+    print(phaseOrder)
+    
     kspace = raw
     
 # =============================================================================
@@ -179,7 +191,11 @@ elif sequence_name == '<Bruker:MSME>':
     for slice in range(0,nSlices):
         for ee in range(0,numEchos):
             imagedata[:,:,slice,ee] = fftshift(fft2(freqdata[:,:,slice,ee]))
-    
+# =============================================================================
+#             plt.contour(np.abs(imagedata[:,:,slice,ee]),levels = 2500,cmap = 'gray')
+#             plt.colorbar()
+#             plt.show()
+# =============================================================================
     
     #%% MSME Exponential fit
     fitdata = imagedata
@@ -235,6 +251,8 @@ elif sequence_name == '<Bruker:MSME>':
             #print(T2_value, T2_error)
             
     
+    #%% MSME plot
+    
     ROWS_TO_FLIP = 0
     COLUMS_TO_FLIP = 15
         
@@ -254,7 +272,7 @@ elif sequence_name == '<Bruker:MSME>':
                )
     cbar = plt.colorbar(img)
     cbar.set_label("T2 [ms]", fontsize=12)
-    #plt.savefig(save_path / "Process_fig_MSME", dpi=1200)
+    #plt.savefig(save_path / "Process_fig_MSME", dpi=1200, bbox_inches='tight')
     plt.show()
             
     #%% MSME images for each echo
@@ -289,4 +307,82 @@ elif sequence_name == '<Bruker:MSME>':
 #         pass
 # =============================================================================
 
+    
+
+    #%% RAREVTR
+elif sequence_name == '<Bruker:RAREVTR>':
+    
+    # Load needed parameters
+    PVM_Matrix = dataset['PVM_EncMatrix'].value
+    rep = dataset['MultiRepTime'].value
+    nRep = len(rep)
+
+
+    phaseOrder = np.array(dataset['PVM_EncSteps1'].value + PVM_Matrix[1]/2 
+                          , dtype=int)
+       
+    print(phaseOrder)
+    raw = np.reshape(rawdata, (PVM_Matrix[0], PVM_Matrix[1], nRep), order='F')
+    raw[:, phaseOrder, :] = raw
+
+
+    kspace = raw
+    
+    plt.contour(np.abs(kspace[:,:,7]),levels = 2500,cmap = 'gray')
+    plt.colorbar()
+    plt.show()
+    
+    freqdata = kspace
+    imagedata = np.zeros_like(freqdata, dtype=np.complex128)
+    nSlices = np.shape(freqdata)[2]
+    print(np.shape(imagedata))
+    for ss in range(0,nRep):
+            imagedata[:,:,ss] = fftshift(fft2(freqdata[:,:,ss]))
+    plot_data = np.abs(imagedata[:,:,0])
+    plt.imshow(np.abs(imagedata[:,:,0]),
+               #levels = 2500,
+               #cmap = 'gray'
+               )
+    plt.title(f"kspace {slice}")
+    plt.colorbar()
+    plt.show()
+    
+            
+# =============================================================================
+#             mapdata = np.abs(imagedata[:,:,ss]/np.max(np.abs(imagedata[:,:,0])))
+#             ROWS_TO_FLIP = 0
+#             COLUMS_TO_FLIP = 15
+#                 
+#             #plot_data = np.rot90(norm_im_data)
+#             mapdata = np.roll(mapdata, ROWS_TO_FLIP, 0)
+#             mapdata = np.roll(mapdata, COLUMS_TO_FLIP, 1)
+# 
+#             #mapdata = np.where(mapdata > 80, 0, mapdata)
+#             #mapdata, mask = am.create_mask3(mapdata, 7)    
+#             #mapdata = am.create_mask(mapdata, 7)    
+# 
+#             plt.figure(dpi=1200)    
+#             img = plt.imshow(mapdata, 
+#                        cmap='inferno',
+#                        interpolation='none',
+#                        
+#                        )
+#             cbar = plt.colorbar(img)
+#             cbar.set_label("T2 [ms]", fontsize=12)
+#             #plt.savefig(save_path / "Process_fig_MSME", dpi=1200, bbox_inches='tight')
+#             plt.show()
+#             pass
+# =============================================================================
+    
+    #print(dataset.TR)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
